@@ -1,0 +1,14 @@
+{
+  "name": "RHF MUSIC",
+  "short_name": "RHF",
+  "theme_color": "#121212",
+  "background_color": "#121212",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "/rhf-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

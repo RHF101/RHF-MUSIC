@@ -1,0 +1,768 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: RHF MUSIC API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: songs
+    description: Song operations
+  - name: playlists
+    description: Playlist operations
+  - name: liked
+    description: Liked songs operations
+  - name: history
+    description: Play history operations
+  - name: search
+    description: Search operations
+  - name: notifications
+    description: Notification operations
+  - name: admin
+    description: Admin operations
+  - name: ai
+    description: AI operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # Songs
+  /songs:
+    get:
+      operationId: getSongs
+      tags: [songs]
+      summary: Get all songs
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: List of songs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Song"
+    post:
+      operationId: createSong
+      tags: [songs]
+      summary: Create a song (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SongInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Song"
+
+  /songs/{id}:
+    get:
+      operationId: getSong
+      tags: [songs]
+      summary: Get a song by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Song
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Song"
+    patch:
+      operationId: updateSong
+      tags: [songs]
+      summary: Update a song (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SongUpdate"
+      responses:
+        "200":
+          description: Updated song
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Song"
+    delete:
+      operationId: deleteSong
+      tags: [songs]
+      summary: Delete a song (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+
+  /songs/featured:
+    get:
+      operationId: getFeaturedSongs
+      tags: [songs]
+      summary: Get featured/trending songs
+      responses:
+        "200":
+          description: Featured songs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Song"
+
+  # Playlists
+  /playlists:
+    get:
+      operationId: getPlaylists
+      tags: [playlists]
+      summary: Get playlists (public or user's)
+      parameters:
+        - name: userId
+          in: query
+          schema: { type: string }
+        - name: isPublic
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: List of playlists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Playlist"
+    post:
+      operationId: createPlaylist
+      tags: [playlists]
+      summary: Create a playlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaylistInput"
+      responses:
+        "201":
+          description: Created playlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+
+  /playlists/{id}:
+    get:
+      operationId: getPlaylist
+      tags: [playlists]
+      summary: Get playlist with songs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Playlist with songs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlaylistDetail"
+    patch:
+      operationId: updatePlaylist
+      tags: [playlists]
+      summary: Update a playlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaylistUpdate"
+      responses:
+        "200":
+          description: Updated playlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+    delete:
+      operationId: deletePlaylist
+      tags: [playlists]
+      summary: Delete a playlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+
+  /playlists/{id}/songs:
+    post:
+      operationId: addSongToPlaylist
+      tags: [playlists]
+      summary: Add song to playlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaylistSongInput"
+      responses:
+        "201":
+          description: Added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+
+  /playlists/{id}/songs/{songId}:
+    delete:
+      operationId: removeSongFromPlaylist
+      tags: [playlists]
+      summary: Remove song from playlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: songId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+
+  # Liked Songs
+  /liked:
+    get:
+      operationId: getLikedSongs
+      tags: [liked]
+      summary: Get user's liked songs
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Liked songs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Song"
+    post:
+      operationId: likeSong
+      tags: [liked]
+      summary: Like a song
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LikeInput"
+      responses:
+        "201":
+          description: Liked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+
+  /liked/{userId}/{songId}:
+    delete:
+      operationId: unlikeSong
+      tags: [liked]
+      summary: Unlike a song
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: songId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Unliked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+
+  # Play History
+  /history:
+    get:
+      operationId: getHistory
+      tags: [history]
+      summary: Get user's play history
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: Play history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlayHistory"
+    post:
+      operationId: recordPlay
+      tags: [history]
+      summary: Record a song play
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayInput"
+      responses:
+        "201":
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+
+  # Search
+  /search:
+    get:
+      operationId: searchSongs
+      tags: [search]
+      summary: Search songs
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResults"
+
+  # Notifications
+  /notifications:
+    get:
+      operationId: getNotifications
+      tags: [notifications]
+      summary: Get user notifications
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+    post:
+      operationId: sendNotification
+      tags: [notifications]
+      summary: Send notification (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationInput"
+      responses:
+        "201":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+
+  # Admin
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Get admin dashboard statistics
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/broadcast:
+    post:
+      operationId: broadcastNotification
+      tags: [admin]
+      summary: Broadcast notification to all users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BroadcastInput"
+      responses:
+        "200":
+          description: Broadcasted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+
+  /admin/users:
+    get:
+      operationId: getAdminUsers
+      tags: [admin]
+      summary: Get all users (admin)
+      responses:
+        "200":
+          description: Users list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserProfile"
+
+  # AI
+  /ai/chat:
+    post:
+      operationId: aiChat
+      tags: [ai]
+      summary: Send prompt to AI (Gemini)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiChatInput"
+      responses:
+        "200":
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiResult"
+
+  /ai/recommend:
+    get:
+      operationId: getAiRecommendations
+      tags: [ai]
+      summary: Get AI song recommendations for user
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Recommended songs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Song"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Song:
+      type: object
+      required: [id, title, artist, audioUrl, coverUrl, duration, createdAt]
+      properties:
+        id:          { type: integer }
+        title:       { type: string }
+        artist:      { type: string }
+        album:       { type: ["string", "null"] }
+        audioUrl:    { type: string }
+        coverUrl:    { type: string }
+        duration:    { type: integer }
+        uploadedBy:  { type: ["string", "null"] }
+        playCount:   { type: integer }
+        createdAt:   { type: string }
+
+    SongInput:
+      type: object
+      required: [title, artist, audioUrl, coverUrl, duration]
+      properties:
+        title:      { type: string }
+        artist:     { type: string }
+        album:      { type: string }
+        audioUrl:   { type: string }
+        coverUrl:   { type: string }
+        duration:   { type: integer }
+        uploadedBy: { type: string }
+
+    SongUpdate:
+      type: object
+      properties:
+        title:    { type: string }
+        artist:   { type: string }
+        album:    { type: string }
+        audioUrl: { type: string }
+        coverUrl: { type: string }
+        duration: { type: integer }
+
+    Playlist:
+      type: object
+      required: [id, name, userId, isPublic, createdAt]
+      properties:
+        id:          { type: integer }
+        name:        { type: string }
+        description: { type: ["string", "null"] }
+        coverUrl:    { type: ["string", "null"] }
+        userId:      { type: string }
+        isPublic:    { type: boolean }
+        songCount:   { type: integer }
+        createdAt:   { type: string }
+
+    PlaylistDetail:
+      type: object
+      required: [id, name, userId, isPublic, songs, createdAt]
+      properties:
+        id:          { type: integer }
+        name:        { type: string }
+        description: { type: ["string", "null"] }
+        coverUrl:    { type: ["string", "null"] }
+        userId:      { type: string }
+        isPublic:    { type: boolean }
+        songs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Song"
+        createdAt:   { type: string }
+
+    PlaylistInput:
+      type: object
+      required: [name, userId]
+      properties:
+        name:        { type: string }
+        description: { type: string }
+        coverUrl:    { type: string }
+        userId:      { type: string }
+        isPublic:    { type: boolean }
+
+    PlaylistUpdate:
+      type: object
+      properties:
+        name:        { type: string }
+        description: { type: string }
+        coverUrl:    { type: string }
+        isPublic:    { type: boolean }
+
+    PlaylistSongInput:
+      type: object
+      required: [songId]
+      properties:
+        songId: { type: integer }
+
+    LikeInput:
+      type: object
+      required: [userId, songId]
+      properties:
+        userId: { type: string }
+        songId: { type: integer }
+
+    PlayHistory:
+      type: object
+      required: [id, userId, songId, playedAt, song]
+      properties:
+        id:       { type: integer }
+        userId:   { type: string }
+        songId:   { type: integer }
+        playedAt: { type: string }
+        song:
+          $ref: "#/components/schemas/Song"
+
+    PlayInput:
+      type: object
+      required: [userId, songId]
+      properties:
+        userId: { type: string }
+        songId: { type: integer }
+
+    SearchResults:
+      type: object
+      required: [songs, playlists]
+      properties:
+        songs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Song"
+        playlists:
+          type: array
+          items:
+            $ref: "#/components/schemas/Playlist"
+
+    Notification:
+      type: object
+      required: [id, userId, message, isRead, createdAt]
+      properties:
+        id:        { type: integer }
+        userId:    { type: string }
+        message:   { type: string }
+        isRead:    { type: boolean }
+        createdAt: { type: string }
+
+    NotificationInput:
+      type: object
+      required: [userId, message]
+      properties:
+        userId:  { type: string }
+        message: { type: string }
+
+    AdminStats:
+      type: object
+      required: [totalUsers, totalSongs, totalPlaylists, totalPlays, topSongs, recentActivity]
+      properties:
+        totalUsers:     { type: integer }
+        totalSongs:     { type: integer }
+        totalPlaylists: { type: integer }
+        totalPlays:     { type: integer }
+        topSongs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Song"
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayHistory"
+
+    BroadcastInput:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+
+    UserProfile:
+      type: object
+      required: [id, email, role, createdAt]
+      properties:
+        id:        { type: string }
+        email:     { type: string }
+        role:      { type: string }
+        createdAt: { type: string }
+
+    AiChatInput:
+      type: object
+      required: [prompt]
+      properties:
+        prompt:  { type: string }
+        userId:  { type: string }
+        context: { type: ["string", "null"] }
+
+    AiResult:
+      type: object
+      required: [response]
+      properties:
+        response: { type: string }
+        action:   { type: ["string", "null"] }
+        data:     {}
+
+    DeleteResponse:
+      type: object
+      required: [success]
+      properties:
+        success: { type: boolean }
+        message: { type: string }
